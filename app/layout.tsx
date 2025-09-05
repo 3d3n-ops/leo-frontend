@@ -7,8 +7,8 @@ import { ClerkProvider } from "@clerk/nextjs"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Docs-wiki",
-  description: "AI-powered documentation chat and analysis",
+  title: "Threads.io",
+  description: "Learn anything, anywhere, anytime.",
 }
 
 export default function RootLayout({
