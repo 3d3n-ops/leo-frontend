@@ -1,11 +1,38 @@
 "use client"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { History, Plus, ChevronLeft, ChevronRight } from "lucide-react"
+import { History, Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { getThreads, type ChatThread } from "@/lib/indexed-db"
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [threads, setThreads] = useState<ChatThread[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function loadThreads() {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const loadedThreads = await getThreads()
+        setThreads(loadedThreads)
+      } catch (err) {
+        console.error("Error loading threads:", err)
+        setError("Failed to load chat history")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadThreads()
+  }, [])
+
+  const handleNewChat = () => {
+    // Navigate to new chat without any parameters
+    window.location.href = "/chat"
+  }
 
   return (
     <div
@@ -25,19 +52,48 @@ export function Sidebar() {
           variant="ghost"
           className={`w-full ${isCollapsed ? "justify-center px-0" : "justify-start"} hover:bg-muted`}
           title={isCollapsed ? "New Chat" : "New Chat"}
+          onClick={handleNewChat}
         >
           <Plus className="h-4 w-4" />
           {!isCollapsed && <span className="ml-2">New Chat</span>}
         </Button>
 
-        <Button
-          variant="ghost"
-          className={`w-full ${isCollapsed ? "justify-center px-0" : "justify-start"} hover:bg-muted`}
-          title={isCollapsed ? "History" : "History"}
-        >
-          <History className="h-4 w-4" />
-          {!isCollapsed && <span className="ml-2">History</span>}
-        </Button>
+        <div className="mt-4">
+          <h2 className={`text-sm font-semibold ${isCollapsed ? "hidden" : "block"}`}>Chat History</h2>
+          <div className="mt-2 space-y-1">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {!isCollapsed && <span className="ml-2 text-sm text-muted-foreground">Loading...</span>}
+              </div>
+            ) : error ? (
+              <div className={`text-sm text-destructive ${isCollapsed ? "text-center" : ""}`}>
+                {isCollapsed ? "!" : error}
+              </div>
+            ) : threads.length === 0 ? (
+              <div className={`text-sm text-muted-foreground ${isCollapsed ? "text-center" : ""}`}>
+                {isCollapsed ? "—" : "No chat history"}
+              </div>
+            ) : (
+              threads.map((thread) => (
+                <Link key={thread.threadId} href={`/chat?threadId=${thread.threadId}`} passHref>
+                  <Button
+                    variant="ghost"
+                    className={`w-full ${isCollapsed ? "justify-center px-0" : "justify-start"} hover:bg-muted text-left`}
+                    title={isCollapsed ? thread.name : thread.name}
+                  >
+                    <History className="h-4 w-4 flex-shrink-0" />
+                    {!isCollapsed && (
+                      <span className="ml-2 truncate" title={thread.name}>
+                        {thread.name}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="p-4 border-t border-border">
