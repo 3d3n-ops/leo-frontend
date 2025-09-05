@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useUser } from "@clerk/nextjs"
 import { Input } from "@/components/ui/input"
 import { Send } from "lucide-react"
@@ -51,65 +51,7 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
     return () => mq.removeEventListener?.("change", update)
   }, [])
 
-  useEffect(() => {
-    async function loadMessages() {
-      try {
-        const loadedMessages = await getMessages(threadId)
-        setMessages(
-          loadedMessages.map((msg) => ({
-            id: msg.id.toString(),
-            content: msg.content,
-            isUser: msg.role === "user",
-            timestamp: new Date(),
-          }))
-        )
-        const userMessages = loadedMessages.filter((msg) => msg.role === "user")
-        setUserMessageCount(userMessages.length)
-        
-        // If we have an initial prompt and no existing messages, auto-submit it
-        if (initialPrompt && loadedMessages.length === 0) {
-          setTimeout(() => {
-            handleAutoSubmit(initialPrompt)
-          }, 500)
-        }
-      } catch (error) {
-        console.error("Error loading messages:", error)
-      } finally {
-        setIsInitializing(false)
-      }
-    }
-    loadMessages()
-  }, [threadId, initialPrompt])
-
-  useEffect(() => {
-    if (messages.length === 10) {
-      setShowNotification(true)
-    }
-  }, [messages.length])
-
-  useEffect(() => {
-    if (!isSignedIn && userMessageCount >= 20) {
-      setShowSignInPopup(true)
-    }
-  }, [isSignedIn, userMessageCount])
-
-  const handleContinueLearning = () => {
-    setShowNotification(false)
-    setShowReminder(true)
-  }
-
-  const handleSaveReminder = (time: string, frequency: string) => {
-    console.log("Reminder saved:", { time, frequency })
-    setShowReminder(false)
-
-    if ("Notification" in window && Notification.permission === "granted") {
-      new Notification("Reminder Set!", {
-        body: `We will remind you to continue learning ${frequency} at ${time}`,
-      })
-    }
-  }
-
-  const handleAutoSubmit = async (prompt: string) => {
+  const handleAutoSubmit = useCallback(async (prompt: string) => {
     if (prompt.trim() && !isLoading) {
       if (!isSignedIn && userMessageCount >= 20) {
         setShowSignInPopup(true)
@@ -191,6 +133,64 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
       } finally {
         setIsLoading(false)
       }
+    }
+  }, [isLoading, isSignedIn, userMessageCount, selectedModel, threadId])
+
+  useEffect(() => {
+    async function loadMessages() {
+      try {
+        const loadedMessages = await getMessages(threadId)
+        setMessages(
+          loadedMessages.map((msg) => ({
+            id: msg.id.toString(),
+            content: msg.content,
+            isUser: msg.role === "user",
+            timestamp: new Date(),
+          }))
+        )
+        const userMessages = loadedMessages.filter((msg) => msg.role === "user")
+        setUserMessageCount(userMessages.length)
+        
+        // If we have an initial prompt and no existing messages, auto-submit it
+        if (initialPrompt && loadedMessages.length === 0) {
+          setTimeout(() => {
+            handleAutoSubmit(initialPrompt)
+          }, 500)
+        }
+      } catch (error) {
+        console.error("Error loading messages:", error)
+      } finally {
+        setIsInitializing(false)
+      }
+    }
+    loadMessages()
+  }, [threadId, initialPrompt, handleAutoSubmit])
+
+  useEffect(() => {
+    if (messages.length === 10) {
+      setShowNotification(true)
+    }
+  }, [messages.length])
+
+  useEffect(() => {
+    if (!isSignedIn && userMessageCount >= 20) {
+      setShowSignInPopup(true)
+    }
+  }, [isSignedIn, userMessageCount])
+
+  const handleContinueLearning = () => {
+    setShowNotification(false)
+    setShowReminder(true)
+  }
+
+  const handleSaveReminder = (time: string, frequency: string) => {
+    console.log("Reminder saved:", { time, frequency })
+    setShowReminder(false)
+
+    if ("Notification" in window && window.Notification.permission === "granted") {
+      new window.Notification("Reminder Set!", {
+        body: `We will remind you to continue learning ${frequency} at ${time}`,
+      })
     }
   }
 

@@ -26,7 +26,9 @@ export function MessageRenderer({ content, className = "" }: MessageRendererProp
         ]}
         components={{
           // Custom styling for code blocks
-          code({ node, inline, className, children, ...props }) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          code(props: any) {
+            const { className, children, inline } = props
             const match = /language-(\w+)/.exec(className || "")
             return !inline && match ? (
               <div className="relative">
@@ -46,7 +48,7 @@ export function MessageRenderer({ content, className = "" }: MessageRendererProp
             )
           },
           // Custom styling for pre blocks
-          pre({ children, ...props }) {
+          pre({ children }) {
             return (
               <div className="my-4">
                 {children}

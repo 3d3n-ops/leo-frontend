@@ -120,7 +120,7 @@ export function InputForm({ onIngestionSuccess }: InputFormProps) {
       })
 
       if (response.ok) {
-        const result = await response.json()
+        await response.json()
         setLogs(prev => [...prev, "Research complete! Generating learning path..."])
         
         // Redirect to chat with the generated content
