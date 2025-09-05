@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { History, Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { getThreads, type ChatThread } from "@/lib/indexed-db"
+import { ThreadLogo } from "@/components/thread-logo"
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -40,7 +41,12 @@ export function Sidebar() {
     >
       {/* Header */}
       <div className="p-4 border-b border-border flex items-center justify-between">
-        {!isCollapsed && <h1 className="text-lg font-semibold">Docs-wiki</h1>}
+        {!isCollapsed && (
+          <div className="flex items-center space-x-2">
+            <ThreadLogo size={28} className="text-black" />
+            <h1 className="text-lg font-semibold">Threads.io</h1>
+          </div>
+        )}
         <Button variant="ghost" size="sm" onClick={() => setIsCollapsed(!isCollapsed)} className="h-8 w-8 p-0">
           {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>

@@ -1,4 +1,5 @@
 import React from "react"
+import { useTheme } from "next-themes"
 
 interface ThreadLogoProps {
   className?: string
@@ -6,6 +7,12 @@ interface ThreadLogoProps {
 }
 
 export function ThreadLogo({ className = "", size = 32 }: ThreadLogoProps) {
+  const { theme, resolvedTheme } = useTheme()
+  
+  // Determine if we should use white color (dark mode or system in dark mode)
+  const isDarkMode = theme === "dark" || (theme === "system" && resolvedTheme === "dark")
+  const logoColor = isDarkMode ? "white" : "currentColor"
+  
   return (
     <svg
       width={size}
@@ -19,7 +26,7 @@ export function ThreadLogo({ className = "", size = 32 }: ThreadLogoProps) {
         <style>
           {`
             .thread-path {
-              stroke: currentColor;
+              stroke: ${logoColor};
               stroke-width: 2.5;
               stroke-linecap: round;
               fill: none;

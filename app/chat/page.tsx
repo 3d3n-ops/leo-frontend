@@ -6,6 +6,7 @@ import { ChatInterface } from "@/components/chat-interface"
 import { Sidebar } from "@/components/sidebar"
 import { Artifact } from "@/components/artifact"
 import { createThread } from "@/lib/indexed-db"
+import { ThreadLogo } from "@/components/thread-logo"
 
 function ChatPageContent() {
   const [artifactOpen, setArtifactOpen] = useState(false)
@@ -61,6 +62,8 @@ function ChatPageContent() {
   if (isInitializing) {
     return (
       <div className="flex h-screen bg-background">
+        <ThreadLogo size={32} className="text-blue-600" />
+        <span>Threads.io</span>
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="flex items-center space-x-2">
