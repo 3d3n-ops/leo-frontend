@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { ThreadLogo } from "./thread-logo"
 
 export function Navbar() {
   const router = useRouter()
@@ -13,13 +14,14 @@ export function Navbar() {
     <nav className="w-full border-b border-gray-200 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Leo Logo */}
+          {/* Threads.io Logo with Icon */}
           <div className="flex-shrink-0">
             <button
               onClick={handleLogoClick}
-              className="text-2xl font-bold text-gray-900 hover:text-gray-700 transition-colors cursor-pointer"
+              className="flex items-center space-x-3 text-2xl font-bold text-gray-900 hover:text-gray-700 transition-colors cursor-pointer"
             >
-              Leo
+              <ThreadLogo size={32} className="text-black" />
+              <span>Threads.io</span>
             </button>
           </div>
           

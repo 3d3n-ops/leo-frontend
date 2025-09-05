@@ -6,14 +6,20 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Send, Upload, FileText } from "lucide-react"
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Send, Upload, FileText, X } from "lucide-react"
 
-type TopicType = "comp-sci" | "swe" | "math-stem"
+type TopicType = "math-stem" | "swe" | "comp-sci"
 
 interface FormData {
   topic: TopicType | null
   prompt: string
-  url: string
   file: File | null
 }
 
@@ -25,7 +31,6 @@ export function InputForm({ onIngestionSuccess }: InputFormProps) {
   const [formData, setFormData] = useState<FormData>({
     topic: null,
     prompt: "",
-    url: "",
     file: null
   })
   const [loading, setLoading] = useState(false)
@@ -35,7 +40,7 @@ export function InputForm({ onIngestionSuccess }: InputFormProps) {
   const router = useRouter()
 
   const topics = [
-    { id: "math-stem" as TopicType, label: "Math", description: "Mathematics and STEM subjects" },
+    { id: "math-stem" as TopicType, label: "Math/STEM", description: "Mathematics and STEM subjects" },
     { id: "swe" as TopicType, label: "SWE", description: "Software Engineering practices" },
     { id: "comp-sci" as TopicType, label: "Comp Sci", description: "Computer Science fundamentals" }
   ]
@@ -77,10 +82,6 @@ export function InputForm({ onIngestionSuccess }: InputFormProps) {
     }
   }
 
-  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, url: e.target.value }))
-  }
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
     setFormData(prev => ({ ...prev, file }))
@@ -88,6 +89,13 @@ export function InputForm({ onIngestionSuccess }: InputFormProps) {
 
   const handleFileUpload = () => {
     fileInputRef.current?.click()
+  }
+
+  const removeFile = () => {
+    setFormData(prev => ({ ...prev, file: null }))
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
   }
 
   const startProcessing = async () => {
@@ -103,10 +111,6 @@ export function InputForm({ onIngestionSuccess }: InputFormProps) {
       const requestData = new FormData()
       requestData.append("topic", formData.topic!)
       requestData.append("prompt", formData.prompt)
-      
-      if (formData.url.trim()) {
-        requestData.append("url", formData.url.trim())
-      }
       
       if (formData.file) {
         requestData.append("file", formData.file)
@@ -147,127 +151,127 @@ export function InputForm({ onIngestionSuccess }: InputFormProps) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Topic Selector - Horizontal Layout */}
-          <div className="space-y-3">
-            <div className="flex gap-3">
-              {topics.map((topic) => (
-                <Button
-                  key={topic.id}
-                  type="button"
-                  variant={formData.topic === topic.id ? "default" : "outline"}
-                  className="flex-1 h-12 text-base font-medium"
-                  onClick={() => handleTopicSelect(topic.id)}
-                  disabled={loading}
-                >
-                  {topic.label}
-                </Button>
-              ))}
-            </div>
-            {errors.topic && (
-              <p className="text-sm text-red-600">{errors.topic}</p>
-            )}
-          </div>
-
-          {/* Prompt Input */}
-          <div className="space-y-2">
-            <Input
-              type="text"
-              placeholder="Enter your learning prompt here..."
-              value={formData.prompt}
-              onChange={handlePromptChange}
-              className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              disabled={loading}
-            />
-            {errors.prompt && (
-              <p className="text-sm text-red-600">{errors.prompt}</p>
-            )}
-          </div>
-
-          {/* Optional Inputs - Side by Side */}
-          <div className="flex gap-3">
-            {/* URL Input */}
-            <div className="flex-1">
-              <Input
-                type="url"
-                placeholder="Optional: Documentation URL"
-                value={formData.url}
-                onChange={handleUrlChange}
-                className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                disabled={loading}
-              />
-            </div>
-
-            {/* File Upload */}
-            <div className="flex-shrink-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleFileUpload}
-                disabled={loading}
-                className="h-12 px-4 border-gray-300 hover:border-gray-400"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Upload
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.doc,.docx,.txt,.md"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </div>
-          </div>
-
-          {/* File Display */}
-          {formData.file && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <FileText className="h-4 w-4" />
-              {formData.file.name}
-            </div>
+    <div className="w-full max-w-4xl">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Main Prompt Input - Large */}
+        <div className="space-y-2">
+          <Input
+            type="text"
+            placeholder="What would you like to learn about?"
+            value={formData.prompt}
+            onChange={handlePromptChange}
+            className="h-16 text-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl"
+            disabled={loading}
+          />
+          {errors.prompt && (
+            <p className="text-sm text-red-600">{errors.prompt}</p>
           )}
+        </div>
 
-          {/* Submit Button */}
-          <div className="pt-2">
-            <Button 
-              type="submit" 
-              size="lg" 
-              className="w-full h-12 text-base bg-blue-600 hover:bg-blue-700" 
+        {/* Topic Selector and File Upload - Side by Side */}
+        <div className="flex gap-4">
+          {/* Topic Selector */}
+          <div className="flex-1">
+            <Select
+              value={formData.topic || ""}
+              onValueChange={(value) => handleTopicSelect(value as TopicType)}
               disabled={loading}
             >
-              {loading ? (
-                "Generating Learning Path..."
-              ) : (
-                <>
-                  <Send className="h-4 w-4 mr-2" />
-                  Send
-                </>
-              )}
+              <SelectTrigger className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl">
+                <SelectValue placeholder="Select a topic" />
+              </SelectTrigger>
+              <SelectContent>
+                {topics.map((topic) => (
+                  <SelectItem key={topic.id} value={topic.id}>
+                    {topic.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.topic && (
+              <p className="text-sm text-red-600 mt-1">{errors.topic}</p>
+            )}
+          </div>
+
+          {/* File Upload */}
+          <div className="flex-shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleFileUpload}
+              disabled={loading}
+              className="h-12 px-6 border-gray-300 hover:border-gray-400 rounded-xl"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Upload File
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.txt,.md"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </div>
+        </div>
+
+        {/* File Display */}
+        {formData.file && (
+          <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <FileText className="h-4 w-4" />
+              <span className="font-medium">{formData.file.name}</span>
+              <span className="text-gray-500">({(formData.file.size / 1024 / 1024).toFixed(2)} MB)</span>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={removeFile}
+              className="h-6 w-6 p-0 hover:bg-gray-200"
+            >
+              <X className="h-3 w-3" />
             </Button>
           </div>
-        </form>
-
-        {/* Progress Logs */}
-        {loading && (
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold mb-4">Processing Progress:</h3>
-            <div className="bg-gray-800 text-white p-4 rounded-md h-64 overflow-y-auto">
-              {logs.map((log, index) => (
-                <p key={index} className="font-mono text-sm">
-                  {log}
-                </p>
-              ))}
-            </div>
-            <Separator className="my-4" />
-            <p className="text-center text-gray-500 text-sm">
-              Please wait, this may take a few moments...
-            </p>
-          </div>
         )}
-      </div>
+
+        {/* Submit Button */}
+        <div className="pt-4">
+          <Button 
+            type="submit" 
+            size="lg" 
+            className="w-full h-14 text-lg bg-blue-600 hover:bg-blue-700 rounded-xl" 
+            disabled={loading}
+          >
+            {loading ? (
+              "Generating Learning Path..."
+            ) : (
+              <>
+                <Send className="h-5 w-5 mr-2" />
+                Start Learning
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
+
+      {/* Progress Logs */}
+      {loading && (
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold mb-4">Processing Progress:</h3>
+          <div className="bg-gray-800 text-white p-4 rounded-lg h-64 overflow-y-auto">
+            {logs.map((log, index) => (
+              <p key={index} className="font-mono text-sm">
+                {log}
+              </p>
+            ))}
+          </div>
+          <Separator className="my-4" />
+          <p className="text-center text-gray-500 text-sm">
+            Please wait, this may take a few moments...
+          </p>
+        </div>
+      )}
     </div>
   )
 }
