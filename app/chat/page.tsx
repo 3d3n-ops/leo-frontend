@@ -1,21 +1,33 @@
-"use client"
+'use client'
 
-import React, { useState, useEffect, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
-import { ChatInterface } from "@/components/chat-interface"
-import { Sidebar } from "@/components/sidebar"
-import { Artifact } from "@/components/artifact"
-import { createThread } from "@/lib/indexed-db"
-import { ThreadLogo } from "@/components/thread-logo"
+import dynamicImport from "next/dynamic";
+import { Suspense, useState, useEffect } from "react";
+
+// Dynamically import all components to prevent SSR issues
+const ChatInterface = dynamicImport(() => import("@/components/chat-interface").then(mod => ({ default: mod.ChatInterface })), { ssr: false });
+const Sidebar = dynamicImport(() => import("@/components/sidebar").then(mod => ({ default: mod.Sidebar })), { ssr: false });
+const Artifact = dynamicImport(() => import("@/components/artifact"), { ssr: false });
+const ThinkingIndicator = dynamicImport(() => import("@/components/thinking-indicator").then(mod => ({ default: mod.ThinkingIndicator })), { ssr: false });
+
+// Disable SSR for this page to prevent build-time issues with IndexedDB
+export const dynamic = 'force-dynamic';
 
 function ChatPageContent() {
   const [artifactOpen, setArtifactOpen] = useState(false)
   const [isInitializing, setIsInitializing] = useState(true)
   const [currentThreadId, setCurrentThreadId] = useState<number | null>(null)
-  const searchParams = useSearchParams()
-  const threadId = searchParams.get("threadId")
-  const topic = searchParams.get("topic")
-  const prompt = searchParams.get("prompt")
+  const [searchParams, setSearchParams] = useState<URLSearchParams | null>(null)
+  
+  // Get search params on client side only
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setSearchParams(new URLSearchParams(window.location.search))
+    }
+  }, [])
+  
+  const threadId = searchParams?.get("threadId") || null
+  const topic = searchParams?.get("topic") || null
+  const prompt = searchParams?.get("prompt") || null
 
   useEffect(() => {
     async function initializeThread() {
@@ -38,6 +50,8 @@ function ChatPageContent() {
               : decodedPrompt;
           }
           
+          // Dynamically import createThread only in the browser
+          const { createThread } = await import("@/lib/indexed-db");
           await createThread(
             threadIdToUse, 
             threadName,
@@ -62,14 +76,13 @@ function ChatPageContent() {
   if (isInitializing) {
     return (
       <div className="flex h-screen bg-background">
-        <ThreadLogo size={32} className="text-blue-600" />
-        <span>Threads.io</span>
-        <Sidebar />
+        <Suspense fallback={<div>Loading...</div>}>
+          <Sidebar />
+        </Suspense>
         <div className="flex-1 flex items-center justify-center">
-          <div className="flex items-center space-x-2">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-            <span>Loading chat...</span>
-          </div>
+          <Suspense fallback={<div>Loading...</div>}>
+            <ThinkingIndicator className="text-lg" />
+          </Suspense>
         </div>
       </div>
     );
@@ -78,7 +91,9 @@ function ChatPageContent() {
   if (!currentThreadId) {
     return (
       <div className="flex h-screen bg-background">
-        <Sidebar />
+        <Suspense fallback={<div>Loading...</div>}>
+          <Sidebar />
+        </Suspense>
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-2">Error</h2>
@@ -91,15 +106,21 @@ function ChatPageContent() {
 
   return (
     <div className="flex h-screen bg-background">
-      <Sidebar />
+      <Suspense fallback={<div>Loading...</div>}>
+        <Sidebar />
+      </Suspense>
       <div className="flex-1 relative overflow-hidden">
-        <ChatInterface
-          threadId={currentThreadId}
-          artifactOpen={artifactOpen}
-          setArtifactOpen={setArtifactOpen}
-          initialPrompt={prompt ? decodeURIComponent(prompt) : undefined}
-        />
-        <Artifact open={artifactOpen} setOpen={setArtifactOpen} />
+        <Suspense fallback={<div>Loading...</div>}>
+          <ChatInterface
+            threadId={currentThreadId}
+            artifactOpen={artifactOpen}
+            setArtifactOpen={setArtifactOpen}
+            initialPrompt={prompt ? decodeURIComponent(prompt) : undefined}
+          />
+        </Suspense>
+        <Suspense fallback={<div>Loading...</div>}>
+          <Artifact open={artifactOpen} setOpen={setArtifactOpen} />
+        </Suspense>
       </div>
     </div>
   )
@@ -107,18 +128,6 @@ function ChatPageContent() {
 
 export default function ChatPage() {
   return (
-    <Suspense fallback={
-      <div className="flex h-screen bg-background">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex items-center space-x-2">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-            <span>Loading...</span>
-          </div>
-        </div>
-      </div>
-    }>
       <ChatPageContent />
-    </Suspense>
   )
 }

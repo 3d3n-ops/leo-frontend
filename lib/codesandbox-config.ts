@@ -110,8 +110,8 @@ export class CodeSandboxErrorHandler {
     console.error(`CodeSandbox Error [${context}]:`, error)
     
     // Log to monitoring service (e.g., Sentry, LogRocket)
-    if (typeof window !== 'undefined' && (window as any).Sentry) {
-      (window as any).Sentry.captureException(error, { tags: { context } })
+    if (typeof window !== 'undefined' && ((window as unknown) as Record<string, unknown>).Sentry) {
+      (((window as unknown) as Record<string, unknown>).Sentry as { captureException?: (error: Error, context: unknown) => void }).captureException?.(error, { tags: { context } })
     }
   }
 

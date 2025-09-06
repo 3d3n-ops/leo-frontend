@@ -4,7 +4,7 @@ import { BookOpen, Code, PenTool } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AnimatePresence, motion } from "framer-motion"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { 
   CODESANDBOX_CONFIG, 
   CodeSandboxResourceMonitor, 
@@ -26,6 +26,20 @@ export function Artifact({ open, setOpen }: ArtifactProps) {
   const resourceMonitor = CodeSandboxResourceMonitor.getInstance()
   const performanceMonitor = CodeSandboxPerformanceMonitor.getInstance()
 
+  const hibernateVM = useCallback(() => {
+    if (iframeRef.current) {
+      try {
+        iframeRef.current.contentWindow?.postMessage(
+          { type: 'HIBERNATE_VM' },
+          'https://codesandbox.io'
+        )
+        performanceMonitor.recordMetric('vm_hibernated', 1)
+      } catch (error) {
+        CodeSandboxErrorHandler.handleError(error as Error, 'hibernate')
+      }
+    }
+  }, [iframeRef, performanceMonitor])
+
   // Track session and implement resource limits
   useEffect(() => {
     if (open && activeTab === "code") {
@@ -34,14 +48,14 @@ export function Artifact({ open, setOpen }: ArtifactProps) {
         setError("Maximum concurrent sessions reached. Please close other CodeSandbox sessions.")
         return
       }
-      
+
       resourceMonitor.startSession(sessionId)
       performanceMonitor.recordMetric('session_started', 1)
     } else {
       resourceMonitor.endSession(sessionId)
       performanceMonitor.recordMetric('session_ended', 1)
     }
-  }, [open, activeTab, sessionId])
+  }, [open, activeTab, sessionId, resourceMonitor, performanceMonitor])
 
   // Auto-hibernate and session management
   useEffect(() => {
@@ -61,15 +75,16 @@ export function Artifact({ open, setOpen }: ArtifactProps) {
 
     const interval = setInterval(checkSession, 60000) // Check every minute
     return () => clearInterval(interval)
-  }, [open, activeTab, sessionId])
+  }, [open, activeTab, sessionId, resourceMonitor, hibernateVM])
 
   // Cleanup on unmount
   useEffect(() => {
+    const iframe = iframeRef.current
     return () => {
       resourceMonitor.endSession(sessionId)
-      if (iframeRef.current) {
+      if (iframe) {
         try {
-          iframeRef.current.contentWindow?.postMessage(
+          iframe.contentWindow?.postMessage(
             { type: 'CLEANUP' },
             'https://codesandbox.io'
           )
@@ -78,21 +93,7 @@ export function Artifact({ open, setOpen }: ArtifactProps) {
         }
       }
     }
-  }, [sessionId])
-
-  const hibernateVM = () => {
-    if (iframeRef.current) {
-      try {
-        iframeRef.current.contentWindow?.postMessage(
-          { type: 'HIBERNATE_VM' },
-          'https://codesandbox.io'
-        )
-        performanceMonitor.recordMetric('vm_hibernated', 1)
-      } catch (error) {
-        CodeSandboxErrorHandler.handleError(error as Error, 'hibernate')
-      }
-    }
-  }
+  }, [sessionId, resourceMonitor])
 
   const handleIframeLoad = () => {
     setIsCodeSandboxLoaded(true)
@@ -219,3 +220,5 @@ export function Artifact({ open, setOpen }: ArtifactProps) {
     </>
   )
 }
+
+export default Artifact;

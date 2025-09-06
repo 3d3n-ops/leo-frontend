@@ -1,4 +1,10 @@
-import { DBSchema, openDB } from "idb";
+// Only import idb on the client side
+let idb: typeof import("idb") | null = null;
+
+if (typeof window !== "undefined") {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  idb = require("idb");
+}
 
 interface ChatMessage {
   id: number;
@@ -17,22 +23,16 @@ export interface ChatThread {
   lastMessageAt: Date;
 }
 
-interface ChatDB extends DBSchema {
-  messages: {
-    key: number;
-    value: ChatMessage;
-    indexes: { "threadId": number };
-  };
-  threads: {
-    key: number;
-    value: ChatThread;
-    indexes: { "threadId": number };
-  };
-}
+// Removed unused ChatDB interface
 
 async function getDb() {
-  return await openDB<ChatDB>("chat-db", 2, {
-    upgrade(db, oldVersion) {
+  if (typeof window === "undefined" || !idb) {
+    throw new Error("IndexedDB is only available in the browser");
+  }
+  
+  return await idb.openDB("chat-db", 2, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    upgrade(db: any, oldVersion: number) {
       if (oldVersion < 1) {
         const messagesStore = db.createObjectStore("messages", {
           keyPath: "id",
@@ -53,6 +53,10 @@ async function getDb() {
 }
 
 export async function addMessage(message: Omit<ChatMessage, "id">) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  
   const db = await getDb();
   await db.add("messages", message as ChatMessage);
   
@@ -68,11 +72,19 @@ export async function addMessage(message: Omit<ChatMessage, "id">) {
 }
 
 export async function getMessages(threadId: number) {
+  if (typeof window === "undefined") {
+    return [];
+  }
+  
   const db = await getDb();
   return await db.getAllFromIndex("messages", "threadId", threadId);
 }
 
 export async function createThread(threadId: number, name: string, topic?: string, prompt?: string) {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  
   const db = await getDb();
   const now = new Date();
   
@@ -95,18 +107,30 @@ export async function createThread(threadId: number, name: string, topic?: strin
 }
 
 export async function getThreads() {
+  if (typeof window === "undefined") {
+    return [];
+  }
+  
   const db = await getDb();
   const threads = await db.getAll("threads");
-  return threads.sort((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime());
+  return threads.sort((a: ChatThread, b: ChatThread) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime());
 }
 
 export async function getThread(threadId: number) {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  
   const db = await getDb();
   const threads = await db.getAllFromIndex("threads", "threadId", threadId);
   return threads[0] || null;
 }
 
 export async function updateThreadName(threadId: number, name: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  
   const db = await getDb();
   const threads = await db.getAllFromIndex("threads", "threadId", threadId);
   if (threads.length > 0) {

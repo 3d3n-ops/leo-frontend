@@ -1,6 +1,7 @@
 "use client"
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
+import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -11,6 +12,15 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ isCollapsed = false }: ThemeToggleProps) {
   const { setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return null
+  }
 
   if (isCollapsed) {
     return (

@@ -1,4 +1,5 @@
-import React from "react"
+'use client'
+import React, { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
 
 interface ThreadLogoProps {
@@ -8,6 +9,24 @@ interface ThreadLogoProps {
 
 export function ThreadLogo({ className = "", size = 32 }: ThreadLogoProps) {
   const { theme, resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 32 32"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className={className}
+      ></svg>
+    )
+  }
   
   // Determine if we should use white color (dark mode or system in dark mode)
   const isDarkMode = theme === "dark" || (theme === "system" && resolvedTheme === "dark")

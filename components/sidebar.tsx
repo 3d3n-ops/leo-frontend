@@ -4,8 +4,18 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { History, Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { getThreads, type ChatThread } from "@/lib/indexed-db"
 import { ThreadLogo } from "@/components/thread-logo"
+
+// Define the ChatThread type locally to avoid importing from indexed-db
+interface ChatThread {
+  id: number;
+  threadId: number;
+  name: string;
+  topic?: string;
+  prompt?: string;
+  createdAt: Date;
+  lastMessageAt: Date;
+}
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -18,6 +28,8 @@ export function Sidebar() {
       try {
         setIsLoading(true)
         setError(null)
+        // Dynamically import getThreads to avoid SSR issues
+        const { getThreads } = await import("@/lib/indexed-db")
         const loadedThreads = await getThreads()
         setThreads(loadedThreads)
       } catch (err) {

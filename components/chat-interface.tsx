@@ -9,10 +9,12 @@ import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { ModelSelector, getDefaultModel, type ModelId } from "@/components/model-selector"
 import { MessageRenderer } from "@/components/message-renderer"
-import { addMessage, getMessages } from "@/lib/indexed-db"
-import { Notification } from "@/components/notification"
-import { Reminder } from "@/components/reminder"
-import { SignInPopup } from "@/components/sign-in-popup"
+import dynamic from "next/dynamic";
+
+const Notification = dynamic(() => import("@/components/notification").then((mod) => mod.Notification), { ssr: false });
+const Reminder = dynamic(() => import("@/components/reminder").then((mod) => mod.Reminder), { ssr: false });
+const SignInPopup = dynamic(() => import("@/components/sign-in-popup").then((mod) => mod.SignInPopup), { ssr: false });
+const ThinkingIndicator = dynamic(() => import("@/components/thinking-indicator").then((mod) => mod.ThinkingIndicator), { ssr: false });
 
 interface Message {
   id: string
@@ -69,6 +71,8 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
       setInputValue("")
       setIsLoading(true)
 
+      // Dynamically import addMessage
+      const { addMessage } = await import("@/lib/indexed-db")
       await addMessage({
         threadId,
         role: "user",
@@ -103,7 +107,9 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
         const data = await response.json()
         const botResponse = data.response || data.content || "No response received"
 
-        await addMessage({
+        // Dynamically import addMessage again for bot response
+        const { addMessage: addBotMessage } = await import("@/lib/indexed-db")
+        await addBotMessage({
           threadId,
           role: "assistant",
           content: botResponse,
@@ -139,6 +145,8 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
   useEffect(() => {
     async function loadMessages() {
       try {
+        // Dynamically import getMessages
+        const { getMessages } = await import("@/lib/indexed-db")
         const loadedMessages = await getMessages(threadId)
         setMessages(
           loadedMessages.map((msg) => ({
@@ -213,6 +221,8 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
       setInputValue("")
       setIsLoading(true)
 
+      // Dynamically import addMessage
+      const { addMessage } = await import("@/lib/indexed-db")
       await addMessage({
         threadId,
         role: "user",
@@ -247,7 +257,9 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
         const data = await response.json()
         const botResponse = data.response || data.content || "No response received"
 
-        await addMessage({
+        // Dynamically import addMessage again for bot response
+        const { addMessage: addBotMessage } = await import("@/lib/indexed-db")
+        await addBotMessage({
           threadId,
           role: "assistant",
           content: botResponse,
@@ -288,7 +300,7 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
         <motion.div
           animate={{ x: targetShift }}
           transition={{ type: "tween", ease: "easeInOut", duration: 0.45 }}
-          className="flex-1 flex flex-col max-w-3xl mx-auto relative"
+          className="flex-1 flex flex-col max-w-5xl mx-auto relative"
         >
           <div className="flex-1 flex items-center justify-center">
             <div className="flex items-center space-x-2">
@@ -308,7 +320,7 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
       <motion.div
         animate={{ x: targetShift }}
         transition={{ type: "tween", ease: "easeInOut", duration: 0.45 }}
-        className="flex-1 flex flex-col max-w-3xl mx-auto relative"
+        className="flex-1 flex flex-col max-w-5xl mx-auto relative"
       >
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -324,10 +336,7 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
                 {message.isUser ? (
                   <div className="whitespace-pre-wrap">{message.content}</div>
                 ) : message.isLoading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-                    <span>Leo is thinking...</span>
-                  </div>
+                  <ThinkingIndicator />
                 ) : (
                   <MessageRenderer content={message.content} />
                 )}
