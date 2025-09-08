@@ -126,6 +126,26 @@ export async function getThread(threadId: number) {
   return threads[0] || null;
 }
 
+export async function deleteThread(threadId: number) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  
+  const db = await getDb();
+  
+  // Find the thread by threadId and delete it
+  const threads = await db.getAllFromIndex("threads", "threadId", threadId);
+  if (threads.length > 0) {
+    await db.delete("threads", threads[0].id);
+  }
+  
+  // Delete all messages for this thread
+  const messages = await db.getAllFromIndex("messages", "threadId", threadId);
+  for (const message of messages) {
+    await db.delete("messages", message.id);
+  }
+}
+
 export async function updateThreadName(threadId: number, name: string) {
   if (typeof window === "undefined") {
     return;

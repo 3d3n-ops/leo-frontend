@@ -19,9 +19,10 @@ export function Navbar() {
             <button
               onClick={handleLogoClick}
               className="flex items-center space-x-3 text-2xl font-bold text-gray-900 hover:text-gray-700 transition-colors cursor-pointer"
+              style={{ color: 'rgb(17, 24, 39)' }}
             >
               <ThreadLogo size={32} className="text-black" />
-              <span>Threads.io</span>
+              <span style={{ color: 'rgb(17, 24, 39)' }}>Threads.io</span>
             </button>
           </div>
           

@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   outputFileTracingRoot: __dirname,
+  experimental: {
+    optimizeCss: true,
+  },
   webpack: (config, { isServer }) => {
     config.resolve.fullySpecified = false;
     

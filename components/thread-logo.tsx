@@ -15,21 +15,8 @@ export function ThreadLogo({ className = "", size = 32 }: ThreadLogoProps) {
     setMounted(true)
   }, [])
 
-  if (!mounted) {
-    return (
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 32 32"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className={className}
-      ></svg>
-    )
-  }
-  
-  // Determine if we should use white color (dark mode or system in dark mode)
-  const isDarkMode = theme === "dark" || (theme === "system" && resolvedTheme === "dark")
+  // Always render the logo, but with a fallback color during hydration
+  const isDarkMode = mounted && (theme === "dark" || (theme === "system" && resolvedTheme === "dark"))
   const logoColor = isDarkMode ? "white" : "currentColor"
   
   return (

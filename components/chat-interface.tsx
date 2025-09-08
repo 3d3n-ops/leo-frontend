@@ -99,29 +99,57 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
           },
           body: JSON.stringify({ message: userMessage, model: selectedModel }),
         })
-
-        if (!response.ok) {
+        if (!response.ok || !response.body) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
-        const data = await response.json()
-        const botResponse = data.response || data.content || "No response received"
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let accumulated = ""
+        let finalContent = ""
 
-        // Dynamically import addMessage again for bot response
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          const chunkText = decoder.decode(value, { stream: true })
+          accumulated += chunkText
+
+          const lines = accumulated.split("\n")
+          accumulated = lines.pop() || ""
+
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed) continue
+            try {
+              const json = JSON.parse(trimmed)
+              if (json.content) {
+                finalContent += json.content
+                setMessages((prev) =>
+                  prev.map((m) => (m.id === botMessageId ? { ...m, content: finalContent } : m))
+                )
+              } else if (json.tool_call) {
+                // Render tool calls as fenced blocks inline
+                const toolSnippet = "\n\n```tool\n" + JSON.stringify(json.tool_call, null, 2) + "\n```\n\n"
+                finalContent += toolSnippet
+                setMessages((prev) =>
+                  prev.map((m) => (m.id === botMessageId ? { ...m, content: finalContent } : m))
+                )
+              } else if (json.error) {
+                throw new Error(json.error)
+              }
+            } catch {
+              // ignore malformed line
+            }
+          }
+        }
+
+        // Persist final content
         const { addMessage: addBotMessage } = await import("@/lib/indexed-db")
-        await addBotMessage({
-          threadId,
-          role: "assistant",
-          content: botResponse,
-        })
-        
-        // Update the bot message with the response
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg.id === botMessageId
-              ? { ...msg, content: botResponse, isLoading: false }
-              : msg
-          )
+        await addBotMessage({ threadId, role: "assistant", content: finalContent || "" })
+
+        // Mark as complete
+        setMessages((prev) =>
+          prev.map((m) => (m.id === botMessageId ? { ...m, isLoading: false } : m))
         )
       } catch (error) {
         console.error("Error sending message:", error)
@@ -249,29 +277,54 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
           },
           body: JSON.stringify({ message: userMessage, model: selectedModel }),
         })
-
-        if (!response.ok) {
+        if (!response.ok || !response.body) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
-        const data = await response.json()
-        const botResponse = data.response || data.content || "No response received"
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let accumulated = ""
+        let finalContent = ""
 
-        // Dynamically import addMessage again for bot response
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          const chunkText = decoder.decode(value, { stream: true })
+          accumulated += chunkText
+
+          const lines = accumulated.split("\n")
+          accumulated = lines.pop() || ""
+
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed) continue
+            try {
+              const json = JSON.parse(trimmed)
+              if (json.content) {
+                finalContent += json.content
+                setMessages((prev) =>
+                  prev.map((m) => (m.id === botMessageId ? { ...m, content: finalContent } : m))
+                )
+              } else if (json.tool_call) {
+                const toolSnippet = "\n\n```tool\n" + JSON.stringify(json.tool_call, null, 2) + "\n```\n\n"
+                finalContent += toolSnippet
+                setMessages((prev) =>
+                  prev.map((m) => (m.id === botMessageId ? { ...m, content: finalContent } : m))
+                )
+              } else if (json.error) {
+                throw new Error(json.error)
+              }
+            } catch {
+              // ignore malformed line
+            }
+          }
+        }
+
         const { addMessage: addBotMessage } = await import("@/lib/indexed-db")
-        await addBotMessage({
-          threadId,
-          role: "assistant",
-          content: botResponse,
-        })
-        
-        // Update the bot message with the response
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg.id === botMessageId
-              ? { ...msg, content: botResponse, isLoading: false }
-              : msg
-          )
+        await addBotMessage({ threadId, role: "assistant", content: finalContent || "" })
+
+        setMessages((prev) =>
+          prev.map((m) => (m.id === botMessageId ? { ...m, isLoading: false } : m))
         )
       } catch (error) {
         console.error("Error sending message:", error)

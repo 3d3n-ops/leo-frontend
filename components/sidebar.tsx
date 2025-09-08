@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { History, Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { History, Plus, ChevronLeft, ChevronRight, Loader2, Trash2 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ThreadLogo } from "@/components/thread-logo"
 
@@ -41,6 +41,23 @@ export function Sidebar() {
     }
     loadThreads()
   }, [])
+
+  const handleDeleteThread = async (threadId: number, event: React.MouseEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    
+    if (window.confirm("Are you sure you want to delete this thread? This action cannot be undone.")) {
+      try {
+        const { deleteThread } = await import("@/lib/indexed-db")
+        await deleteThread(threadId)
+        // Remove the thread from the local state
+        setThreads(prevThreads => prevThreads.filter(thread => thread.threadId !== threadId))
+      } catch (err) {
+        console.error("Error deleting thread:", err)
+        setError("Failed to delete thread")
+      }
+    }
+  }
 
   const handleNewChat = () => {
     // Navigate to new chat without any parameters
@@ -94,20 +111,33 @@ export function Sidebar() {
               </div>
             ) : (
               threads.map((thread) => (
-                <Link key={thread.threadId} href={`/chat?threadId=${thread.threadId}`} passHref>
+                <div key={thread.threadId} className="group relative">
+                  <Link href={`/chat?threadId=${thread.threadId}`} passHref>
+                    <Button
+                      variant="ghost"
+                      className={`w-full ${isCollapsed ? "justify-center px-0" : "justify-start"} hover:bg-muted text-left`}
+                      title={isCollapsed ? thread.name : thread.name}
+                    >
+                      <History className="h-4 w-4 flex-shrink-0" />
+                      {!isCollapsed && (
+                        <span className="ml-2 truncate" title={thread.name}>
+                          {thread.name}
+                        </span>
+                      )}
+                    </Button>
+                  </Link>
                   <Button
                     variant="ghost"
-                    className={`w-full ${isCollapsed ? "justify-center px-0" : "justify-start"} hover:bg-muted text-left`}
-                    title={isCollapsed ? thread.name : thread.name}
+                    size="sm"
+                    className={`absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground ${
+                      isCollapsed ? "right-0" : ""
+                    }`}
+                    onClick={(e) => handleDeleteThread(thread.threadId, e)}
+                    title="Delete thread"
                   >
-                    <History className="h-4 w-4 flex-shrink-0" />
-                    {!isCollapsed && (
-                      <span className="ml-2 truncate" title={thread.name}>
-                        {thread.name}
-                      </span>
-                    )}
+                    <Trash2 className="h-3 w-3" />
                   </Button>
-                </Link>
+                </div>
               ))
             )}
           </div>
