@@ -1,7 +1,7 @@
 'use client'
 
 import dynamicImport from "next/dynamic";
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 
 // Dynamically import all components to prevent SSR issues
 const ChatInterface = dynamicImport(() => import("@/components/chat-interface").then(mod => ({ default: mod.ChatInterface })), { ssr: false });
@@ -11,6 +11,16 @@ const ThinkingIndicator = dynamicImport(() => import("@/components/thinking-indi
 
 // Disable SSR for this page to prevent build-time issues with IndexedDB
 export const dynamic = 'force-dynamic';
+
+// Counter for generating unique thread IDs
+let threadIdCounter = 0;
+
+function generateUniqueThreadId(): number {
+  // Simple approach: timestamp + counter ensures uniqueness
+  const timestamp = Date.now();
+  const counter = ++threadIdCounter;
+  return timestamp * 1000 + counter;
+}
 
 function ChatPageContent() {
   const [artifactOpen, setArtifactOpen] = useState(false)
@@ -39,7 +49,8 @@ function ChatPageContent() {
           threadIdToUse = parseInt(threadId, 10);
         } else {
           // New thread - create with meaningful name
-          threadIdToUse = Date.now();
+          // Generate unique ID using timestamp, random component, and counter
+          threadIdToUse = generateUniqueThreadId();
           
           let threadName = "New Chat";
           if (prompt) {
@@ -63,8 +74,8 @@ function ChatPageContent() {
         setCurrentThreadId(threadIdToUse);
       } catch (error) {
         console.error("Error initializing thread:", error);
-        // Fallback to timestamp-based thread
-        setCurrentThreadId(Date.now());
+        // Fallback to unique thread ID
+        setCurrentThreadId(generateUniqueThreadId());
       } finally {
         setIsInitializing(false);
       }

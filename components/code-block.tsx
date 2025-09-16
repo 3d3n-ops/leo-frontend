@@ -4,30 +4,75 @@ import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, Download } from "lucide-react"
 import { motion } from "framer-motion"
-import Prism from 'prismjs'
-import 'prismjs/themes/prism-tomorrow.css'
-// Core language components - only include commonly available ones
-import 'prismjs/components/prism-javascript'
-import 'prismjs/components/prism-typescript'
-import 'prismjs/components/prism-jsx'
-import 'prismjs/components/prism-tsx'
-import 'prismjs/components/prism-python'
-import 'prismjs/components/prism-java'
-import 'prismjs/components/prism-cpp'
-import 'prismjs/components/prism-c'
-import 'prismjs/components/prism-csharp'
-import 'prismjs/components/prism-php'
-import 'prismjs/components/prism-ruby'
-import 'prismjs/components/prism-go'
-import 'prismjs/components/prism-rust'
-import 'prismjs/components/prism-sql'
-import 'prismjs/components/prism-json'
-import 'prismjs/components/prism-markup'
-import 'prismjs/components/prism-css'
-import 'prismjs/components/prism-scss'
-import 'prismjs/components/prism-sass'
-import 'prismjs/components/prism-bash'
-import 'prismjs/components/prism-markdown'
+// Import Prism.js safely with proper error handling
+let Prism: any = null
+let prismLoaded = false
+
+// Safely import Prism.js and its components
+const loadPrism = async () => {
+  if (prismLoaded && Prism) return Prism
+  
+  try {
+    // Only load on client side
+    if (typeof window === 'undefined') {
+      return null
+    }
+    
+    // Import Prism.js dynamically to avoid SSR issues
+    const prismModule = await import('prismjs')
+    Prism = prismModule.default
+    
+    // Import CSS - handle the CSS import separately
+    try {
+      // @ts-ignore - CSS imports don't have type declarations
+      await import('prismjs/themes/prism-tomorrow.css')
+    } catch (cssError) {
+      console.warn('Could not load Prism CSS:', cssError)
+    }
+    
+    // Import core language components with error handling
+    const languageImports = [
+      'prismjs/components/prism-javascript',
+      'prismjs/components/prism-typescript', 
+      'prismjs/components/prism-jsx',
+      'prismjs/components/prism-tsx',
+      'prismjs/components/prism-python',
+      'prismjs/components/prism-java',
+      'prismjs/components/prism-cpp',
+      'prismjs/components/prism-c',
+      'prismjs/components/prism-csharp',
+      'prismjs/components/prism-php',
+      'prismjs/components/prism-ruby',
+      'prismjs/components/prism-go',
+      'prismjs/components/prism-rust',
+      'prismjs/components/prism-sql',
+      'prismjs/components/prism-json',
+      'prismjs/components/prism-markup',
+      'prismjs/components/prism-css',
+      'prismjs/components/prism-scss',
+      'prismjs/components/prism-sass',
+      'prismjs/components/prism-bash',
+      'prismjs/components/prism-markdown'
+    ]
+    
+    // Load language components with individual error handling
+    await Promise.allSettled(
+      languageImports.map(async (modulePath) => {
+        try {
+          await import(modulePath)
+        } catch (error) {
+          console.warn(`Failed to load ${modulePath}:`, error)
+        }
+      })
+    )
+    
+    prismLoaded = true
+    return Prism
+  } catch (error) {
+    console.error('Failed to load Prism.js:', error)
+    return null
+  }
+}
 
 interface CodeBlockProps {
   code: string
@@ -50,6 +95,14 @@ export function CodeBlock({
   useEffect(() => {
     const highlightCode = async () => {
       try {
+        // Load Prism.js dynamically
+        const prism = await loadPrism()
+        if (!prism) {
+          console.warn('Prism.js not available, using plain text')
+          setHighlightedCode(code)
+          return
+        }
+
         if (language && language !== 'text') {
           // Map common language aliases to their Prism.js equivalents
           const languageMap: Record<string, string> = {
@@ -121,17 +174,27 @@ export function CodeBlock({
 
           const prismLanguage = languageMap[language.toLowerCase()] || language
 
-          // Check if language is already loaded
-          if (Prism.languages[prismLanguage]) {
-            const highlighted = Prism.highlight(code, Prism.languages[prismLanguage], prismLanguage)
-            setHighlightedCode(highlighted)
+          // Check if language is already loaded and prism.languages exists
+          if (prism.languages && prism.languages[prismLanguage]) {
+            try {
+              const highlighted = prism.highlight(code, prism.languages[prismLanguage], prismLanguage)
+              setHighlightedCode(highlighted)
+            } catch (highlightError) {
+              console.warn(`Error highlighting code with ${prismLanguage}:`, highlightError)
+              setHighlightedCode(code)
+            }
           } else {
             // Try to dynamically load the language component
             try {
               await import(`prismjs/components/prism-${prismLanguage}`)
-              if (Prism.languages[prismLanguage]) {
-                const highlighted = Prism.highlight(code, Prism.languages[prismLanguage], prismLanguage)
-                setHighlightedCode(highlighted)
+              if (prism.languages && prism.languages[prismLanguage]) {
+                try {
+                  const highlighted = prism.highlight(code, prism.languages[prismLanguage], prismLanguage)
+                  setHighlightedCode(highlighted)
+                } catch (highlightError) {
+                  console.warn(`Error highlighting code with ${prismLanguage}:`, highlightError)
+                  setHighlightedCode(code)
+                }
               } else {
                 setHighlightedCode(code)
               }

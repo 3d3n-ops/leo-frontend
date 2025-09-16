@@ -62,7 +62,7 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
 
       const userMessage = prompt.trim()
       const newUserMessage: Message = {
-        id: Date.now().toString(),
+        id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         content: userMessage,
         isUser: true,
         timestamp: new Date(),
@@ -81,7 +81,7 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
       setUserMessageCount((prevCount) => prevCount + 1)
 
       // Create a placeholder bot message for streaming
-      const botMessageId = Date.now().toString() + "-bot"
+      const botMessageId = `bot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       const initialBotMessage: Message = {
         id: botMessageId,
         content: "",
@@ -154,7 +154,7 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
       } catch (error) {
         console.error("Error sending message:", error)
         const errorMessage: Message = {
-          id: Date.now().toString() + "-error",
+          id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           content: `Error: ${error instanceof Error ? error.message : "Could not connect to the backend."}`,
           isUser: false,
           timestamp: new Date(),
@@ -240,7 +240,7 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
 
       const userMessage = inputValue.trim()
       const newUserMessage: Message = {
-        id: Date.now().toString(),
+        id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         content: userMessage,
         isUser: true,
         timestamp: new Date(),
@@ -259,7 +259,7 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
       setUserMessageCount((prevCount) => prevCount + 1)
 
       // Create a placeholder bot message for streaming
-      const botMessageId = Date.now().toString() + "-bot"
+      const botMessageId = `bot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       const initialBotMessage: Message = {
         id: botMessageId,
         content: "",
@@ -329,7 +329,7 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
       } catch (error) {
         console.error("Error sending message:", error)
         const errorMessage: Message = {
-          id: Date.now().toString() + "-error",
+          id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           content: `Error: ${error instanceof Error ? error.message : "Could not connect to the backend."}`,
           isUser: false,
           timestamp: new Date(),
