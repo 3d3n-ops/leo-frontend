@@ -353,7 +353,7 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
         <motion.div
           animate={{ x: targetShift }}
           transition={{ type: "tween", ease: "easeInOut", duration: 0.45 }}
-          className="flex-1 flex flex-col max-w-5xl mx-auto relative"
+          className="flex-1 flex flex-col max-w-xl mx-auto relative"
         >
           <div className="flex-1 flex items-center justify-center">
             <div className="flex items-center space-x-2">
@@ -373,7 +373,7 @@ export function ChatInterface({ artifactOpen = false, threadId, initialPrompt }:
       <motion.div
         animate={{ x: targetShift }}
         transition={{ type: "tween", ease: "easeInOut", duration: 0.45 }}
-        className="flex-1 flex flex-col max-w-5xl mx-auto relative"
+        className="flex-1 flex flex-col max-w-xl mx-auto relative"
       >
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">

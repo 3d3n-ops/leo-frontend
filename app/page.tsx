@@ -2,19 +2,20 @@
 
 import { Navbar } from "@/components/navbar"
 import { InputForm } from "@/components/inputForm"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       <Navbar />
       <main className="flex flex-col items-center justify-center py-12 px-4">
         <div className="w-full max-w-4xl text-center">
           {/* Hero Section */}
           <div className="mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl font-bold text-foreground mb-4">
               Explore <em className="text-blue-600">any</em> concept
             </h1>
-            <h2 className="text-4xl font-bold text-gray-900 mb-8">
+            <h2 className="text-4xl font-bold text-foreground mb-8">
               Learn <em className="text-blue-600">anything</em> fast
             </h2>
           </div>
@@ -26,7 +27,7 @@ export default function Home() {
           
           {/* Starter Threads Section */}
           <div className="text-left">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">
+            <h3 className="text-2xl font-bold text-foreground mb-6">
               Interesting Threads to start
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -38,16 +39,21 @@ export default function Home() {
               ].map((thread, index) => (
                 <div 
                   key={index}
-                  className="bg-gray-100 rounded-lg p-6 hover:bg-gray-200 transition-colors cursor-pointer"
+                  className="bg-muted rounded-lg p-6 hover:bg-muted/80 transition-colors cursor-pointer"
                 >
-                  <h4 className="font-semibold text-gray-900 mb-2">{thread.title}</h4>
-                  <p className="text-sm text-gray-600">{thread.description}</p>
+                  <h4 className="font-semibold text-foreground mb-2">{thread.title}</h4>
+                  <p className="text-sm text-muted-foreground">{thread.description}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
       </main>
+      
+      {/* Theme Toggle Button - Bottom Left */}
+      <div className="fixed bottom-4 left-4 z-50">
+        <ThemeToggle isCollapsed={true} />
+      </div>
     </div>
   )
 }

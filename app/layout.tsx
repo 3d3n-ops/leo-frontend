@@ -9,6 +9,12 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: "Threads.io",
   description: "Learn anything, anywhere, anytime.",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/favicon.svg",
+  },
 }
 
 export default function RootLayout({

@@ -13,6 +13,13 @@ import {
 import { cn } from "@/lib/utils"
 
 const AVAILABLE_MODELS = [
+  // Groq models (ultra-fast)
+  "google/gemma-2-9b-it",
+  "moonshotai/kimi-k2-0905",
+  "deepseek/deepseek-r1-distill-llama-70b",
+  "openai/gpt-oss-120b",
+  "meta-llama/llama-guard-4-12b",
+  // Original models (fallback)
   "x-ai/grok-code-fast-1",
   "openai/gpt-5",
   "anthropic/claude-sonnet-4",
@@ -24,7 +31,7 @@ const AVAILABLE_MODELS = [
 export type ModelId = typeof AVAILABLE_MODELS[number]
 
 export function getDefaultModel(): ModelId {
-  return "openai/gpt-5"
+  return "google/gemma-2-9b-it"  // Ultra-fast Groq model as default
 }
 
 export function ModelSelector({
@@ -49,11 +56,28 @@ export function ModelSelector({
         <DropdownMenuLabel>Choose model</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup value={value} onValueChange={(val) => onChange(val as ModelId)}>
-          {AVAILABLE_MODELS.map((m) => (
-            <DropdownMenuRadioItem key={m} value={m}>
-              {m}
-            </DropdownMenuRadioItem>
-          ))}
+          {AVAILABLE_MODELS.map((m) => {
+            const isGroqModel = [
+              "google/gemma-2-9b-it",
+              "moonshotai/kimi-k2-0905", 
+              "deepseek/deepseek-r1-distill-llama-70b",
+              "openai/gpt-oss-120b",
+              "meta-llama/llama-guard-4-12b"
+            ].includes(m)
+            
+            return (
+              <DropdownMenuRadioItem key={m} value={m}>
+                <div className="flex items-center gap-2">
+                  {m}
+                  {isGroqModel && (
+                    <span className="text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded">
+                      ⚡ Fast
+                    </span>
+                  )}
+                </div>
+              </DropdownMenuRadioItem>
+            )
+          })}
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>

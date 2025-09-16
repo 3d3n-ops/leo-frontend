@@ -1,9 +1,33 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, Download } from "lucide-react"
 import { motion } from "framer-motion"
+import Prism from 'prismjs'
+import 'prismjs/themes/prism-tomorrow.css'
+// Core language components - only include commonly available ones
+import 'prismjs/components/prism-javascript'
+import 'prismjs/components/prism-typescript'
+import 'prismjs/components/prism-jsx'
+import 'prismjs/components/prism-tsx'
+import 'prismjs/components/prism-python'
+import 'prismjs/components/prism-java'
+import 'prismjs/components/prism-cpp'
+import 'prismjs/components/prism-c'
+import 'prismjs/components/prism-csharp'
+import 'prismjs/components/prism-php'
+import 'prismjs/components/prism-ruby'
+import 'prismjs/components/prism-go'
+import 'prismjs/components/prism-rust'
+import 'prismjs/components/prism-sql'
+import 'prismjs/components/prism-json'
+import 'prismjs/components/prism-markup'
+import 'prismjs/components/prism-css'
+import 'prismjs/components/prism-scss'
+import 'prismjs/components/prism-sass'
+import 'prismjs/components/prism-bash'
+import 'prismjs/components/prism-markdown'
 
 interface CodeBlockProps {
   code: string
@@ -21,6 +45,112 @@ export function CodeBlock({
   showLineNumbers = false 
 }: CodeBlockProps) {
   const [copied, setCopied] = useState(false)
+  const [highlightedCode, setHighlightedCode] = useState("")
+
+  useEffect(() => {
+    const highlightCode = async () => {
+      try {
+        if (language && language !== 'text') {
+          // Map common language aliases to their Prism.js equivalents
+          const languageMap: Record<string, string> = {
+            'html': 'markup',
+            'xml': 'markup',
+            'svg': 'markup',
+            'mathml': 'markup',
+            'ssml': 'markup',
+            'atom': 'markup',
+            'rss': 'markup',
+            'js': 'javascript',
+            'ts': 'typescript',
+            'py': 'python',
+            'rb': 'ruby',
+            'sh': 'bash',
+            'zsh': 'bash',
+            'fish': 'bash',
+            'ps1': 'powershell',
+            'psm1': 'powershell',
+            'psd1': 'powershell',
+            'cs': 'csharp',
+            'cpp': 'cpp',
+            'cc': 'cpp',
+            'cxx': 'cpp',
+            'hpp': 'cpp',
+            'h': 'c',
+            'hxx': 'cpp',
+            'h++': 'cpp',
+            'php': 'php',
+            'phtml': 'php',
+            'php3': 'php',
+            'php4': 'php',
+            'php5': 'php',
+            'phps': 'php',
+            'go': 'go',
+            'golang': 'go',
+            'rs': 'rust',
+            'swift': 'swift',
+            'kt': 'kotlin',
+            'kts': 'kotlin',
+            'scala': 'scala',
+            'sc': 'scala',
+            'clj': 'clojure',
+            'cljs': 'clojure',
+            'hs': 'haskell',
+            'lhs': 'haskell',
+            'sql': 'sql',
+            'json': 'json',
+            'yaml': 'yaml',
+            'yml': 'yaml',
+            'css': 'css',
+            'scss': 'scss',
+            'sass': 'sass',
+            'less': 'less',
+            'md': 'markdown',
+            'mkd': 'markdown',
+            'mkdn': 'markdown',
+            'mdwn': 'markdown',
+            'mdown': 'markdown',
+            'markdown': 'markdown',
+            'tex': 'latex',
+            'latex': 'latex',
+            'ltx': 'latex',
+            'sty': 'latex',
+            'cls': 'latex',
+            'dtx': 'latex',
+            'ins': 'latex'
+          }
+
+          const prismLanguage = languageMap[language.toLowerCase()] || language
+
+          // Check if language is already loaded
+          if (Prism.languages[prismLanguage]) {
+            const highlighted = Prism.highlight(code, Prism.languages[prismLanguage], prismLanguage)
+            setHighlightedCode(highlighted)
+          } else {
+            // Try to dynamically load the language component
+            try {
+              await import(`prismjs/components/prism-${prismLanguage}`)
+              if (Prism.languages[prismLanguage]) {
+                const highlighted = Prism.highlight(code, Prism.languages[prismLanguage], prismLanguage)
+                setHighlightedCode(highlighted)
+              } else {
+                setHighlightedCode(code)
+              }
+            } catch (importError) {
+              console.warn(`Language component for ${prismLanguage} not found, using plain text:`, importError)
+              setHighlightedCode(code)
+            }
+          }
+        } else {
+          setHighlightedCode(code)
+        }
+      } catch (error) {
+        console.error('Syntax highlighting error:', error)
+        setHighlightedCode(code)
+      }
+    }
+
+    highlightCode()
+  }, [code, language])
 
   const handleCopy = async () => {
     try {
@@ -109,16 +239,13 @@ export function CodeBlock({
                     </div>
                   ))}
                 </div>
-                <div className="flex-1">
-                  {lines.map((line, index) => (
-                    <div key={index} className="leading-6">
-                      {line || '\u00A0'}
-                    </div>
-                  ))}
-                </div>
+                <div 
+                  className="flex-1"
+                  dangerouslySetInnerHTML={{ __html: highlightedCode }}
+                />
               </div>
             ) : (
-              code
+              <div dangerouslySetInnerHTML={{ __html: highlightedCode }} />
             )}
           </code>
         </pre>
