@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Copy, Check, Download } from "lucide-react"
 import { motion } from "framer-motion"
 // Import Prism.js safely with proper error handling
-let Prism: any = null
+let Prism: typeof import('prismjs') | null = null
 let prismLoaded = false
 
 // Safely import Prism.js and its components
@@ -24,7 +24,7 @@ const loadPrism = async () => {
     
     // Import CSS - handle the CSS import separately
     try {
-      // @ts-ignore - CSS imports don't have type declarations
+      // @ts-expect-error - CSS imports don't have type declarations
       await import('prismjs/themes/prism-tomorrow.css')
     } catch (cssError) {
       console.warn('Could not load Prism CSS:', cssError)

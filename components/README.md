@@ -154,5 +154,4 @@ All components use Tailwind CSS classes and support both light and dark themes. 
 
 ## Demo Pages
 
-- `/demo` - Individual component demonstrations
 - `/sample` - Complete message with all component types

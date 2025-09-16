@@ -1,7 +1,7 @@
 'use client'
 
 import dynamicImport from "next/dynamic";
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect } from "react";
 
 // Dynamically import all components to prevent SSR issues
 const ChatInterface = dynamicImport(() => import("@/components/chat-interface").then(mod => ({ default: mod.ChatInterface })), { ssr: false });
